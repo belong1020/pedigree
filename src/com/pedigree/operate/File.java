@@ -58,6 +58,7 @@ public class File {
 					liststr.add(num1[count]);
 				}
 			}
+			br.close();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
