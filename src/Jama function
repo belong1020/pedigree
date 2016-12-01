@@ -1,0 +1,37 @@
+      JAMA功能汇总
+Jama.Matrix
+	对象操作
+	构造函数  
+	set 方法    set(int i, int j, double s) 
+	get 方法  get(int i, int j)  getArray()
+	拷贝方法 copy() 
+	克隆方法 clone()
+	
+矩阵元素级别的操作
+	矩阵加法 plus(Matrix B) 
+	矩阵减法  minus(Matrix B)
+	矩阵乘法 times(Matrix B)
+	放大缩小
+	元素乘法  arrayTimesEquals(Matrix B) 
+	元素除法 arrayLeftDivide(Matrix B) 
+	求反 uminus() 
+	倒置   transpose() 
+	范式 norm()
+矩阵分解
+	Cholesky   chol()
+	LU  lu() 
+	R   qr()
+	SVD   svd()
+	对称矩阵的特征值  eig()
+
+       非对称矩阵的特征值 eig()
+线性方程求解
+           非奇异系统
+           最小二乘    solve(Matrix B)
+矩阵相关的数学量
+          条件数   cond() 
+          行列式 det() 
+          矩阵秩  rank() 
+         求逆 inverse()
+
+          伪逆 inverse()
