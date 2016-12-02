@@ -1,4 +1,7 @@
 package com.pedigree.test;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+
 import com.pedigree.main.A;;
 
 
@@ -15,7 +18,14 @@ public class test {
 			}System.out.println();
 		}
 		
+		EigenvalueDecomposition eig = new Matrix(Aall).eig();
+		Aall = eig.getD().getArray();
 		
+		for(int i=0; i<Aall.length; i++){
+			for(int j=0; j<Aall[0].length; j++){
+				System.out.print(Aall[i][j]+" ");
+			}System.out.println();
+		}
 		
 	}
 }

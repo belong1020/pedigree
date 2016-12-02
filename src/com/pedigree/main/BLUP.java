@@ -1,5 +1,8 @@
 package com.pedigree.main;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+
 import com.pedigree.R.CrossImp;
 import com.pedigree.R.Diag;
 
@@ -8,34 +11,80 @@ public class BLUP{
 	private static CrossImp CI = new CrossImp();
 	
 	private static void emma_REMLE(double[] y,double[] X,double[][] K){
+		
 		int ngrids=100;
 		int llim=-10;
 		int ulim=10;
 		double esp=1e-10;
-
+		
+		
+		
+		int n = y.length;
+		int t = K.length;
+		int q = X.length;
+		
+		
+		
+		
+		
+		
+		
+		
 
 	}
+	
 	/**
 	 * @param logdelta
 	 * @param lambda
 	 * @param etas
 	 * @return
 	 */
-	private static double emma_delta_REML_LL_wo_Z(double logdelta,double lambda,double[] etas){
+	private static double emma_delta_REML_LL_wo_Z(double logdelta,double[] lambda,double[] etas){
 	
 		int nq = etas.length;
 		double delta = Math.exp(logdelta);
-		double temp = 0.0;
-		for(int i=0; i<etas.length; i++) temp += etas[i]*etas[i]/(lambda+delta);
-		//lambda+delta  矩阵？
-		return ( 0.5*(nq*(Math.log(nq/(2*Math.PI))-1-Math.log(temp))-sum(Math.log(lambda+delta))) );
+		double sum1 = 0.0;
+		for(int i=0; i<etas.length; i++) sum1 += etas[i]*etas[i]/(lambda[i]+delta);
+		double sum2 = 0.0;
+		for(int i=0; i<lambda.length; i++) sum2+=Math.log(lambda[i]+delta);
+
+		// lambda  矩阵？		
+		return ( 0.5*(nq*(Math.log(nq/(2*Math.PI))-1-Math.log(sum1))-sum2) );
 	}
 	
-	private static double emma_delta_REML_dLL_wo_Z(double logdelta,double lambda,double[] etas){
+	/**
+	 * @param logdelta
+	 * @param lambda
+	 * @param etas
+	 * @return
+	 */
+	private static double emma_delta_REML_dLL_wo_Z(double logdelta,double[] lambda,double[] etas){
 		
+		int nq = etas.length;
+		double delta = Math.exp(logdelta);
+		double[] etasq = new double[etas.length];
+		for(int i=0; i<etas.length; i++){
+			etasq[i] = etas[i] * etas[i];
+		}
+		double[] ldelta = new double[lambda.length];
+		for(int i=0; i<lambda.length; i++){
+			ldelta[i] = lambda[i] +delta;
+		}
 		
+		double sum1 = 0.0;
+		double sum2 = 0.0;
+		double sum3 = 0.0;
 		
-		return( 0.5*(nq*sum(etasq/(ldelta*ldelta))/sum(etasq/ldelta)-sum(1/ldelta)) );
+		for(int i=0; i<ldelta.length ; i++){
+			sum1 += etasq[i]/(ldelta[i] * ldelta[i]);
+		}
+		for(int i=0; i<ldelta.length ; i++){
+			sum2 += etasq[i]/ldelta[i];
+		}
+		for(int i=0; i<ldelta.length ; i++){
+			sum3 += 1/ldelta[i];
+		}
+		return( 0.5*(nq*sum1/sum2-sum3) );
 	}
 
 	/**
@@ -43,15 +92,37 @@ public class BLUP{
 	 * @param X
 	 * @return
 	 */
-	private static double emma_eigen_R_wo_Z(double[][] K,double[][] X) {
+	private static double[] emma_eigen_R_wo_Z(double[][] K,double[][] X) {
 		int n = X.length;
 		int q = X[0].length;
-		double[][] S = Diag.diag(n)-CI.tcrossprod(CI.crossprod(X,solve(CI.crossprod(X,X))),X);
-		double[][] eig = eigen(CI.crossprod(CI.crossprod(S,(K+diag(1,n))),S),symmetric=TRUE);
-		//# 判断是否负数？
-		stopifnot(!is.complex(eig$values))
+		Matrix m1 = new Matrix(CI.crossprod(X,X));
+		double[][] solveArray = m1.inverse().getArray();
+		double[][] N = Diag.diag(n);
+		double[][] N1 = CI.tcrossprod(CI.ncrossprod(X,solveArray ),X);		//中转
+		double[][] S = new double[n][n];
+		//S <- diag(n) - X %*% solve(crossprod(X,X)) %*% t(X)
+		for(int i=0; i<n; i++){
+			for(int j=0; j<n; j++){
+					S[i][j] = N[i][j] - N1[i][j];
+			}
+		}
+		for(int i=0; i<n; i++){
+			for(int j=0; j<n; j++){
+					N1[i][j] = K[i][j] + N1[i][j];
+			}
+		}
+		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,N1),S);
+		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
+		double[][] eigD = new Matrix(eig).eig().getD().getArray();	//特征值
+		double[][] eigV = new Matrix(eig).eig().getV().getArray();	//特征向量
+		double[] eigLine =new double[eig.length];
+		for(int i=0; i<eig.length; i++){
+			eigLine[i] = eigD[i][i];
+		}
+		//# 判断是否复数   a+bi     保留、？？？？
+		//stopifnot(!is.complex(eig$values))
 		//# 数据打包 return 
-		return(list(values=eig$values[1:(n-q)]-1,vectors=eig$vectors[,1:(n-q)]));
+		return eigLine;
 		
 	}
 	
@@ -94,7 +165,7 @@ public class BLUP{
 		double[][] ZZ;
 		int byl = 1;
 		boolean go;
-		double[] iZZ_K ;
+		double[][] iZZ_K ;
 		double[][] Z_iZZ_K_tZ ;
 		double[][] v;
 		double[] itX_v;
@@ -145,8 +216,13 @@ public class BLUP{
 		Z_iZZ_K_tZ = CI.tcrossprod(iZZ_K,Z);
 		
 		//v <- Z - Z %*% Z.iZZ.K.tZ		//#矩阵
+		
+		
+		
+		
+		
 		double[][] temp1 = CI.ncrossprod(Z, Z_iZZ_K_tZ);
-		y_d = new double[Z.length][Z[0].length];
+		v = new double[Z.length][Z[0].length];
 		for(int i=0; i<Z.length; i++){
 			for(int j=0; j<Z[0].length; j++){
 				v[i][j] = Z[i][j] - temp1[i][j];
@@ -165,7 +241,7 @@ public class BLUP{
 		
 		//y.d <- ys - X0 %*% beta
 		double[] temp2 = CI.ncrossprod(X0, beta);
-		y_d = new double[ys.length][ys[0].length];
+		y_d = new double[ys.length];
 		for(int i=0; i<ys.length; i++){
 			for(int j=0; j<ys[0].length; j++){
 				y_d[i][j] = ys[i][j] - temp2[i][j];
