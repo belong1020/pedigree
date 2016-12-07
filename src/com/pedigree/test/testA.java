@@ -5,7 +5,7 @@ import Jama.Matrix;
 import com.pedigree.main.A;;
 
 
-public class test {
+public class testA {
 	public static void main(String[] args) {
 		String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file1.csv" ;
 		boolean standard_id = false;

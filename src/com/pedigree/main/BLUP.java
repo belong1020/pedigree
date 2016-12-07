@@ -1,35 +1,152 @@
 package com.pedigree.main;
 
+import java.util.ArrayList;
+
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 
 import com.pedigree.R.CrossImp;
 import com.pedigree.R.Diag;
+import com.pedigree.R.RmathImp;
+import com.pedigree.domain.Eigen;
 
 //  https://github.com/ElisbanFlores/Paralela/blob/master/main.cpp#L29
 public class BLUP{
 	private static CrossImp CI = new CrossImp();
-	
-	private static void emma_REMLE(double[] y,double[] X,double[][] K){
+	private static RmathImp RI = new RmathImp();
+	private static double[] emma_REMLE(double[] y,double[] X,double[][] K){
 		
 		int ngrids=100;
 		int llim=-10;
 		int ulim=10;
 		double esp=1e-10;
 		
-		
+		Eigen e = emma_eigen_R_wo_Z(K, X);
 		
 		int n = y.length;
 		int t = K.length;
 		int q = X.length;
+		if(K[0].length == t) System.exit(1);
+		if(X.length == n) System.exit(1);
+		if( det(crossprod(X,X)) == 0 ) {
+			//System.out.println("X is singular")
+			int REML=0;
+			double[] delta;
+			int ve=0;
+			int vg=0;
+			return delta;
+		}
+		double[] etas = CI.crossprod(e.getEigV(), y);
+		/*
+		double[] logdelta ={
+				-10.0,  -9.8,  -9.6,  -9.4,  -9.2,  -9.0,  -8.8,  -8.6,  -8.4,  -8.2,
+				 -8.0,  -7.8,  -7.6,  -7.4,  -7.2,  -7.0,  -6.8,  -6.6,  -6.4,  -6.2,
+				 -6.0,  -5.8,  -5.6,  -5.4,  -5.2,  -5.0,  -4.8,  -4.6,  -4.4,  -4.2,
+				 -4.0,  -3.8,  -3.6,  -3.4,  -3.2,  -3.0,  -2.8,  -2.6,  -2.4,  -2.2,
+				 -2.0,  -1.8,  -1.6,  -1.4,  -1.2,  -1.0,  -0.8,  -0.6,  -0.4,  -0.2,
+				  0.0,   0.2,   0.4,   0.6,   0.8,   1.0,   1.2,   1.4,   1.6,   1.8,
+				  2.0,   2.2,   2.4,   2.6,   2.8,   3.0,   3.2,   3.4,   3.6,   3.8,
+				  4.0,   4.2,   4.4,   4.6,   4.8,   5.0,   5.2,   5.4,   5.6,   5.8,
+			 	  6.0,   6.2,   6.4,   6.6,   6.8,   7.0,   7.2,   7.4,   7.6,   7.8,
+				  8.0,   8.2,   8.4,   8.6,   8.8,   9.0,   9.2,   9.4,   9.6,   9.8,
+				  10.0	
+		};*/
+		double[] logdelta = new double[ngrids+1];
+		for(int i=0; i<ngrids+1; i++){
+			logdelta[i] = i/ngrids*(ulim-llim)+llim;
+		}
+		int m = logdelta.length;
+		double[] delta = new double[logdelta.length];
+		for(int i=0; i<ngrids+1; i++){
+			delta[i] = Math.exp(logdelta[i]);
+		}
+		double[][] Lambdas = new double[n-q][m];
+		for(int i=0; i<Lambdas.length; i++ ){
+			for(int j=0; j<Lambdas[0].length; j++){
+				Lambdas[i][j] = e.getEigV()[i][j]+ delta[i*Lambdas.length+ j];
+			}
+		}
+		double[][] Etasq = new double[n-q][m];
+		for(int i=0; i<Etasq.length; i++){
+			for(int j=0; j<Etasq[0].length; j++){
+				Etasq[i][j] = etas[i*Etasq.length+j] * etas[i*Etasq.length+j];
+			}
+		}
+		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
+		for(int i=0; i<Etasq.length; i++){
+			for(int j=0; j<Etasq.length; j++){
+				temp[i][j] = Etasq[i][j]/ Lambdas[i][j];
+			}				
+		}
+		double[] templog = RI.log(RI.colSums(temp));//	log(colSums(Etasq/Lambdas))
+		double[] tempcol = RI.colSums(RI.log(Lambdas));//	colSums(log(Lambdas))
+		double nqlog = Math.log((n-q)/(2*Math.PI));//		log((n-q)/(2*pi))
+		double[] LL = new double[templog.length] ;
+		for(int i=0; i<LL.length; i++){		
+			LL[i] = 0.5*((n-q)*(nqlog-1-templog[i])-tempcol[i]);// LL = ;
+		}
+		double[] dLL = new double[templog.length] ;
+		double[][] Lambdas2 = new double[Lambdas.length][Lambdas[0].length];//	Etasq/Lambdas*Lambdas
+		for(int i=0; i<Lambdas2.length; i++){
+			for(int j=0; j<Lambdas2[0].length; j++){
+				Lambdas2[i][j] = Etasq[i][j]/Lambdas[i][j] * Lambdas[i][j];
+			}
+		}
+		double[][] Lambdas1 = new double[Lambdas.length][Lambdas[0].length];//	1/Lambdas
+		for(int i=0; i<Lambdas2.length; i++){
+			for(int j=0; j<Lambdas2[0].length; j++){
+				Lambdas1[i][j] = 1/Lambdas[i][j] ;
+			}
+		}
+		double[] temp2col1 = RI.colSums(Lambdas2);//colSums(Etasq/(Lambdas * Lambdas))
+		double[] temp2col2 = RI.colSums(temp);
+		double[] temp2col3 = RI.colSums(Lambdas1);
+		
+		for(int i=0; i<dLL.length; i++){
+			dLL[i] = 0.5*delta[i]*((n-q)*temp2col1[i]/temp2col2[i]-temp2col3[i]);
+		}
+				
+		//类似list
+		//double[] optlogdelta = vector(length=0);
+		//double[] optLL = vector(length=0);
+		ArrayList<Integer> optlogdelta = new ArrayList<Integer>();
+		ArrayList<Double> optLL = new ArrayList<Double>();
 		
 		
+		if( dLL[0] < esp ) {
+			optlogdelta.add(llim);
+			optLL = append(optLL, emma.delta.REML.LL.wo.Z(llim,eig.R $values ,etas))
+		}
+		if( dLL[m-3] > 0-esp ) {
+			optlogdelta.add(ulim);
+			optLL = append(optLL, emma.delta.REML.LL.wo.Z(ulim,eig.R$values,etas))
+		}
+		
+		for(int i=0; i<m-2; i++){
+			
+			if( ( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 ) ) {
+				
+				//求解方程根公式
+				r <- uniroot(emma.delta.REML.dLL.wo.Z, lower=logdelta[i], upper=logdelta[i+1], lambda=eig.R$values, etas=etas)
+				optlogdelta <- append(optlogdelta, r$root)
+
+				optLL <- append(optLL, emma.delta.REML.LL.wo.Z(r$root,eig.R$values, etas)) //矩阵
+			}
+		}
+		
+		double maxdelta = Math.exp(optlogdelta[(int)RI.max(optLL)]);
+		optLL=replaceNaN(optLL)   
+		double maxLL = RI.max(optLL);
+		maxva <- sum(etas*etas/(eig.R$values+maxdelta))/(n-q)    
+		maxve <- maxva*maxdelta
 		
 		
-		
-		
-		
-		
+	//	double REML=maxLL;
+		delta = maxdelta;
+	//	ve=maxve;
+		//vg=maxva;
+		return delta;
+
 
 	}
 	
@@ -92,9 +209,10 @@ public class BLUP{
 	 * @param X
 	 * @return
 	 */
-	private static double[] emma_eigen_R_wo_Z(double[][] K,double[][] X) {
+	private static Eigen emma_eigen_R_wo_Z(double[][] K,double[] X) {
+		Eigen e = new Eigen();
 		int n = X.length;
-		int q = X[0].length;
+		//int q = X[0].length;
 		Matrix m1 = new Matrix(CI.crossprod(X,X));
 		double[][] solveArray = m1.inverse().getArray();
 		double[][] N = Diag.diag(n);
@@ -114,15 +232,16 @@ public class BLUP{
 		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,N1),S);
 		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
 		double[][] eigD = new Matrix(eig).eig().getD().getArray();	//特征值
-		double[][] eigV = new Matrix(eig).eig().getV().getArray();	//特征向量
 		double[] eigLine =new double[eig.length];
 		for(int i=0; i<eig.length; i++){
 			eigLine[i] = eigD[i][i];
 		}
+		e.setEigD(eigLine);
+		e.setEigV( new Matrix(eig).eig().getV().getArray());	//特征向量
 		//# 判断是否复数   a+bi     保留、？？？？
 		//stopifnot(!is.complex(eig$values))
 		//# 数据打包 return 
-		return eigLine;
+		return e;
 		
 	}
 	
@@ -146,6 +265,23 @@ public class BLUP{
 		}
 	}
 	 */
+	
+	private static double[] replaceNaN(double[] LL) {
+		ArrayList<Integer> num = new ArrayList<Integer>();
+		int count = 0;
+		for(int i=0; i<LL.length; i++){
+			if(LL[i]==0){
+				num.add(i);
+				count++;
+			}
+		}
+		if(!num.isEmpty()){
+			for(int i=0; i<num.size(); i++){
+				LL[num.get(i)]=count;
+			}
+		}
+		return LL;
+	}
 	
 	/**
 	 * @param phe
@@ -258,21 +394,7 @@ public class BLUP{
 		
 		
 		
-		
-		
-		
-		
-		
-		
-		
-		
 	}
 
 	
-	
-
-
-	
-	
-
 }
