@@ -1,5 +1,7 @@
 package com.pedigree.R;
 
+import java.util.ArrayList;
+
 interface Rmath {
 
 	double[] colSums(double[][] num);
@@ -8,7 +10,7 @@ interface Rmath {
 	double[][] log(double[][] num);
 	double[] log(double[] num);
 	
-	double max(double[] num);
+	double max(ArrayList<Double> num);
 	
 	
 	

@@ -10,14 +10,18 @@ interface Cross {
 	
 	
 	double[][] crossprod(double[][] x);
+	double[][] crossprod(double[] x, double[] y);
 	double[][] crossprod(double[][] x, double[][] y);
+	double[] crossprod(double[] x, double[][] y);
+	double[] crossprod(double[][] x, double[] y);
+	
 	
 	double[][] tcrossprod(double[][] x);
 	double[][] tcrossprod(double[][] x, double[][] y);
+	double[][] tcrossprod(double[] x, double[] y);
 	double[] tcrossprod(double[] x, double[][] y);
-	double[] tcrossprod(double[][] x, double[] y);
 	
-	
+	double[][] ncrossprod(double x, double[][] y);
 	double[][] ncrossprod(double[][] x, double[][] y);
 	double[] ncrossprod(double[] x,double[][] y);
 	double[] ncrossprod(double[][] x,double[] y);

@@ -1,5 +1,7 @@
 package com.pedigree.R;
 
+import java.util.ArrayList;
+
 public class RmathImp implements Rmath{
 
 	/*		colSums of double[][]
@@ -60,22 +62,20 @@ public class RmathImp implements Rmath{
 	}
 
 	
-	/*		max of double[]
+	/*		max of ArrayList<Double>
 	 * @see com.pedigree.R.Rmath#max(double[])
 	 */
-	public double max(double[] num) {
+	public double max(ArrayList<Double> optLL) {
 		
-		double num1 = num[0];
-		for(int i=1; i<num.length; i++){
-			if(num1 < num[i]){
-				num1 = num[i];
+		double num1 = optLL.get(0);
+		for(int i=1; i<optLL.size(); i++){
+			if(num1 < optLL.get(i)){
+				num1 = optLL.get(i);
 			}
 		}
 		return num1;
 	}
-	
-	
-	
+
 	
 	
 	

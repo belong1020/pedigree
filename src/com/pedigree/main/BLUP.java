@@ -8,13 +8,14 @@ import Jama.Matrix;
 import com.pedigree.R.CrossImp;
 import com.pedigree.R.Diag;
 import com.pedigree.R.RmathImp;
+import com.pedigree.R.ginv;
 import com.pedigree.domain.Eigen;
 
 //  https://github.com/ElisbanFlores/Paralela/blob/master/main.cpp#L29
 public class BLUP{
 	private static CrossImp CI = new CrossImp();
 	private static RmathImp RI = new RmathImp();
-	private static double[] emma_REMLE(double[] y,double[] X,double[][] K){
+	private static double emma_REMLE(double[] y,double[] X,double[][] K){
 		
 		int ngrids=100;
 		int llim=-10;
@@ -28,10 +29,11 @@ public class BLUP{
 		int q = X.length;
 		if(K[0].length == t) System.exit(1);
 		if(X.length == n) System.exit(1);
-		if( det(crossprod(X,X)) == 0 ) {
+		Matrix mat = new Matrix(CI.crossprod(X,X));	//行列式
+		if( mat.det() == 0 ) {
 			//System.out.println("X is singular")
 			int REML=0;
-			double[] delta;
+			double delta=0;
 			int ve=0;
 			int vg=0;
 			return delta;
@@ -112,40 +114,39 @@ public class BLUP{
 		ArrayList<Integer> optlogdelta = new ArrayList<Integer>();
 		ArrayList<Double> optLL = new ArrayList<Double>();
 		
-		
+		/*
 		if( dLL[0] < esp ) {
 			optlogdelta.add(llim);
-			optLL = append(optLL, emma.delta.REML.LL.wo.Z(llim,eig.R $values ,etas))
+			optLL .add( emma_delta_REML_LL_wo_Z(llim,eig.R $values ,etas));
 		}
 		if( dLL[m-3] > 0-esp ) {
 			optlogdelta.add(ulim);
-			optLL = append(optLL, emma.delta.REML.LL.wo.Z(ulim,eig.R$values,etas))
+			optLL .add(optLL, emma_delta_REML_LL_wo_Z(ulim,eig.R$values,etas));
 		}
-		
+		*/
+		/*
 		for(int i=0; i<m-2; i++){
 			
 			if( ( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 ) ) {
 				
 				//求解方程根公式
-				r <- uniroot(emma.delta.REML.dLL.wo.Z, lower=logdelta[i], upper=logdelta[i+1], lambda=eig.R$values, etas=etas)
-				optlogdelta <- append(optlogdelta, r$root)
-
-				optLL <- append(optLL, emma.delta.REML.LL.wo.Z(r$root,eig.R$values, etas)) //矩阵
+				r = uniroot(emma.delta.REML.dLL.wo.Z, lower=logdelta[i], upper=logdelta[i+1], lambda=eig.R$values, etas=etas)
+				optlogdelta.add(optlogdelta, r);
+				optLL .add(emma.delta.REML.LL.wo.Z(r$root,eig.R$values, etas) //
 			}
 		}
+		*/
 		
-		double maxdelta = Math.exp(optlogdelta[(int)RI.max(optLL)]);
-		optLL=replaceNaN(optLL)   
+		double maxdelta = Math.exp(optlogdelta.get((int)RI.max(optLL)));
+	//	optLL=replaceNaN(optLL)   
 		double maxLL = RI.max(optLL);
-		maxva <- sum(etas*etas/(eig.R$values+maxdelta))/(n-q)    
-		maxve <- maxva*maxdelta
-		
-		
+	//	maxva <- sum(etas*etas/(eig.R$values+maxdelta))/(n-q)    
+	//	maxve <- maxva*maxdelta
 	//	double REML=maxLL;
-		delta = maxdelta;
+		double delta1 = maxdelta;
 	//	ve=maxve;
-		//vg=maxva;
-		return delta;
+	//	vg=maxva;
+		return delta1;
 
 
 	}
@@ -301,6 +302,7 @@ public class BLUP{
 		double[][] ZZ;
 		int byl = 1;
 		boolean go;
+		double[][] ik;
 		double[][] iZZ_K ;
 		double[][] Z_iZZ_K_tZ ;
 		double[][] v;
@@ -321,7 +323,7 @@ public class BLUP{
 			//X0 = cbind(matrix(1,n,1),CV);
 		}
 		//if(lambda==null){
-		lambda = emma_REMLE(phe, X=X0, K=K)$delta;
+		lambda = emma_REMLE(phe,X0, K);
 		//}
 		ys = phe;
 		Z = Diag.diag(n);
@@ -345,18 +347,17 @@ public class BLUP{
 				System.out.println("Replacing the inverse of K with generalized inverse...");
 				//library(MASS);
 				//ik<-ginv(K);		//求广义逆矩阵
+				ik = ginv.pinv(new Matrix(K)).getArray();
 				go = false;
 			}
 		}
 		//iZZ_K = solve(ZZ + ik*lambda);
+		Matrix matiZZ = new Matrix(ZZ);
+		Matrix matiik = new Matrix(ik);
+		
 		Z_iZZ_K_tZ = CI.tcrossprod(iZZ_K,Z);
 		
 		//v <- Z - Z %*% Z.iZZ.K.tZ		//#矩阵
-		
-		
-		
-		
-		
 		double[][] temp1 = CI.ncrossprod(Z, Z_iZZ_K_tZ);
 		v = new double[Z.length][Z[0].length];
 		for(int i=0; i<Z.length; i++){
@@ -368,7 +369,7 @@ public class BLUP{
 		
 		itX_v = CI.crossprod(X0,v);
 		
-		//iXvX = solve(CI.ncrossprod(itX_v , X0));		//#矩阵
+		iXvX = solve(CI.ncrossprod(itX_v , X0));		//#矩阵
 		
 		tXv = CI.crossprod(X0,v);
 		
