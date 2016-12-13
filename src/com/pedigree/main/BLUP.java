@@ -27,11 +27,13 @@ public class BLUP{
 		int n = y.length;
 		int t = K.length;
 		int q = X.length;
-		if(K[0].length == t) System.exit(1);
-		if(X.length == n) System.exit(1);
-		Matrix mat = new Matrix(CI.crossprod(X,X));	//行列式
-		if( mat.det() == 0 ) {
-			//System.out.println("X is singular")
+		if(K[0].length != t) System.exit(1);
+		if(X.length != n) System.exit(1);
+		
+		double det = CI.crossprod(X,X);				//一个数的行列式是本身  
+		
+		if( det == 0 ) {
+			System.out.println("X is singular");
 			int REML=0;
 			double delta=0;
 			int ve=0;
@@ -39,7 +41,7 @@ public class BLUP{
 			return delta;
 		}
 		double[] etas = CI.crossprod(e.getEigV(), y);
-		/*
+		
 		double[] logdelta ={
 				-10.0,  -9.8,  -9.6,  -9.4,  -9.2,  -9.0,  -8.8,  -8.6,  -8.4,  -8.2,
 				 -8.0,  -7.8,  -7.6,  -7.4,  -7.2,  -7.0,  -6.8,  -6.6,  -6.4,  -6.2,
@@ -52,11 +54,13 @@ public class BLUP{
 			 	  6.0,   6.2,   6.4,   6.6,   6.8,   7.0,   7.2,   7.4,   7.6,   7.8,
 				  8.0,   8.2,   8.4,   8.6,   8.8,   9.0,   9.2,   9.4,   9.6,   9.8,
 				  10.0	
-		};*/
+		};
+		/*
 		double[] logdelta = new double[ngrids+1];
 		for(int i=0; i<ngrids+1; i++){
 			logdelta[i] = i/ngrids*(ulim-llim)+llim;
-		}
+		}*/
+				
 		int m = logdelta.length;
 		double[] delta = new double[logdelta.length];
 		for(int i=0; i<ngrids+1; i++){
@@ -68,12 +72,24 @@ public class BLUP{
 				Lambdas[i][j] = e.getEigV()[i][j]+ delta[i*Lambdas.length+ j];
 			}
 		}
+		
+		for(double[] j:e.getEigV()   ){
+			for(double k:j){
+				System.out.print(k+"\t\t");
+			}System.out.println();
+		}
+		
+		
+		
+		
+		
 		double[][] Etasq = new double[n-q][m];
 		for(int i=0; i<Etasq.length; i++){
 			for(int j=0; j<Etasq[0].length; j++){
 				Etasq[i][j] = etas[i*Etasq.length+j] * etas[i*Etasq.length+j];
 			}
 		}
+				
 		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
 		for(int i=0; i<Etasq.length; i++){
 			for(int j=0; j<Etasq.length; j++){
@@ -146,6 +162,7 @@ public class BLUP{
 		double delta1 = maxdelta;
 	//	ve=maxve;
 	//	vg=maxva;
+		
 		return delta1;
 
 
@@ -210,25 +227,29 @@ public class BLUP{
 	 * @param X
 	 * @return
 	 */
-	private static Eigen emma_eigen_R_wo_Z(double[][] K,double[] X) {
+	public static Eigen emma_eigen_R_wo_Z(double[][] K,double[] X) {
+		
 		Eigen e = new Eigen();
+		
 		int n = X.length;
 		//int q = X[0].length;
-		Matrix m1 = new Matrix(CI.crossprod(X,X));
-		double[][] solveArray = m1.inverse().getArray();
+		double solveX = 1/CI.crossprod(X, X);
+
 		double[][] N = Diag.diag(n);
-		double[][] N1 = CI.tcrossprod(CI.ncrossprod(X,solveArray ),X);		//中转
-		double[][] S = new double[n][n];
-		//S <- diag(n) - X %*% solve(crossprod(X,X)) %*% t(X)
-		for(int i=0; i<n; i++){
-			for(int j=0; j<n; j++){
-					S[i][j] = N[i][j] - N1[i][j];
+		double[]   NN = CI.ncrossprod(solveX,X);
+		double[][] N1 = new double[X.length][X.length];		//中转
+		for(int i=0; i<X.length; i++){
+			for(int j=0; j<X.length; j++){
+				N1[i][j] = NN[i] * X[j];
 			}
 		}
-		for(int i=0; i<n; i++){
-			for(int j=0; j<n; j++){
-					N1[i][j] = K[i][j] + N1[i][j];
-			}
+		
+		//S <- diag(n) - X %*% solve(crossprod(X,X)) %*% t(X)
+		double[][] S = new Matrix(N).minus(new Matrix(N1)).getArray();// new double[n][n];
+				
+		double[][] K1 = K;
+		for(int i=0; i<K1.length; i++){			
+			N1[i][i] ++;
 		}
 		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,N1),S);
 		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
@@ -287,22 +308,23 @@ public class BLUP{
 	/**
 	 * @param phe
 	 * @param k
+	 * @return 
 	 */
-	public static void BLUP(double[] phe, double[][] K) {
-		String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file1.csv" ;
+	public static double[] BLUP(double[] phe, double[][] K) {
+		//String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file1.csv" ;
 		boolean standard_id = false;
 		boolean file_output = false;
 		double[] CV ;
 		double lambda ;
 		CrossImp CI = new CrossImp(); 
-		int n = phe.length;
+		int n;
 		double[] X0;
 		double[] ys; 
 		double[][] Z;
 		double[][] ZZ;
 		int byl = 1;
 		boolean go;
-		double[][] ik;
+		double[][] ik = null;
 		double[][] iZZ_K ;
 		double[][] Z_iZZ_K_tZ ;
 		double[][] v;
@@ -314,16 +336,19 @@ public class BLUP{
 		double[][] tZZ_K ;
 		double[] BLUP_ebv ;
 		
+		
+		n = phe.length;
 		//if( K == null )	K = Kinship(geno);			//k 不为空
-		if(CV==null){
+		//if(CV==null){
 			X0 = new double[n];
 			for(int i=0; i<X0.length; i++)
 				X0[i] = 1;
-		}else{
-			//X0 = cbind(matrix(1,n,1),CV);
-		}
+		//}else{
+		//	X0 = cbind(matrix(1,n,1),CV);
+		//}
 		//if(lambda==null){
 		lambda = emma_REMLE(phe,X0, K);
+		System.out.println(lambda);
 		//}
 		ys = phe;
 		Z = Diag.diag(n);
@@ -337,27 +362,39 @@ public class BLUP{
 			for(int i=0; i<myK.length; i++){
 				myK[i][i] += esp[byl];
 			}
-			//solve
 			
+			//solve
 			//ik = try(solve(myK),silent=TRUE);
 			//go = inherits(ik,"try-error");
 			
+			ik = new Matrix(myK).inverse().getArray();
+			for(int i=0; i<ik.length; i++){			//强制去ik中 无效数 —————— 绝对值小于0.1 
+				for(int j=0; j<ik[0].length; j++){
+					if( Math.abs(ik[i][j])<0.1 )
+						ik[i][j] = 0.0;
+				}
+			}
+			
+			go = false;
 			byl ++;
 			if(byl==9 && go==true){
 				System.out.println("Replacing the inverse of K with generalized inverse...");
 				//library(MASS);
 				//ik<-ginv(K);		//求广义逆矩阵
-				ik = ginv.pinv(new Matrix(K)).getArray();
+				ik = new Matrix(K).inverse().getArray();
+				
+				//ik = ginv.pinv(new Matrix(K)).getArray();
 				go = false;
 			}
 		}
 		//iZZ_K = solve(ZZ + ik*lambda);
 		Matrix matiZZ = new Matrix(ZZ);
 		Matrix matiik = new Matrix(ik);
-		
+				
+		iZZ_K = matiZZ.plus(matiik.times(3.648755)).inverse().getArray() ;//lambda
 		Z_iZZ_K_tZ = CI.tcrossprod(iZZ_K,Z);
 		
-		//v <- Z - Z %*% Z.iZZ.K.tZ		//#矩阵
+		//v <- Z - Z %*% Z.iZZ.K.tZ
 		double[][] temp1 = CI.ncrossprod(Z, Z_iZZ_K_tZ);
 		v = new double[Z.length][Z[0].length];
 		for(int i=0; i<Z.length; i++){
@@ -366,36 +403,22 @@ public class BLUP{
 			}
 		}
 		
-		
 		itX_v = CI.crossprod(X0,v);
-		
-		iXvX = solve(CI.ncrossprod(itX_v , X0));		//#矩阵
-		
+		iXvX = 1/CI.ncrossprod(itX_v , X0);
 		tXv = CI.crossprod(X0,v);
-		
 		//beta<- iXvX %*% tXv %*% ys
 		beta = CI.ncrossprod( CI.ncrossprod(iXvX, tXv),ys);
 		
 		//y.d <- ys - X0 %*% beta
-		double[] temp2 = CI.ncrossprod(X0, beta);
 		y_d = new double[ys.length];
 		for(int i=0; i<ys.length; i++){
-			for(int j=0; j<ys[0].length; j++){
-				y_d[i][j] = ys[i][j] - temp2[i][j];
-			}
+				y_d[i] = ys[i] - X0[i]*beta;
 		}
-		
-		tZZ_K = CI.tcrossprod(iZZ_K,Z);	//#矩阵
+		tZZ_K = CI.tcrossprod(iZZ_K,Z);
 		BLUP_ebv = CI.ncrossprod(tZZ_K , y_d);
-		
-		
-		
-		return (list(beta=beta,ebv=BLUP_ebv));
-		
-		
-		
+				
+		return BLUP_ebv;// + beta
 		
 	}
 
-	
 }

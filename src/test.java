@@ -14,8 +14,14 @@ public class test {
 		//System.out.println(str.getBytes().length);
 		//System.out.println(String.valueOf(i).length());
 		
-		double[][] a={
-		{1,2,3},{4,5,6}
+		double[] a={0.13533665310380152,	
+				0.13803361011615645	,
+				0.1187641831715871	,
+				0.14206991074951913	,
+				0.11292450775121293	,
+				0.12532362627321084	,
+				0.11580896354506831	,
+				0.11173854528944377
 		};
 		double[][] b={
 		{1,5,9,13},{2,6,10,14},
@@ -32,18 +38,18 @@ public class test {
 				{0.5,  0.0, 0.50, 0.25, 0.250, 0.25, 0.125, 1.000},
 
 				};
-		Matrix m1 = new Matrix(a);
+		Matrix m1 = new Matrix(y);
 		Matrix m2 = new Matrix(y);
 		Matrix m3 = null ;
 		Matrix m4 = Matrix.random(3,1);
 		
 		//solve 求逆
-		Matrix x = m2.inverse();
+		//Matrix x = m2.inverse();
 		//ginv 求矩阵广义逆
-		Matrix x2 ;
-		double[][] num = ginv.ginvrun(y);
+		//Matrix x2 ;
+		//double[][] num = x.getArray();//ginv.ginvrun(y);
 		
-		/*
+		
 		//eign
 		double[][] cvalue1  = new Matrix(b).eig().getD().getArray();
 		double[][] cvalue2  = new Matrix(b).eig().getV().getArray();		
@@ -70,14 +76,19 @@ public class test {
 				
 			}System.out.println();
 		}
-		*/
 		
+		/*
 		for(int k=0; k<num.length; k++ ){
 			for(int j=0; j<num[0].length; j++){
 				System.out.print(num[k][j]+" ");
 				
-			}System.out.println();
+			}
+			System.out.println();
 		}
+		*/
+		
+		
+		
 		
 	}
 }

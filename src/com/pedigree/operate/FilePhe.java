@@ -13,8 +13,7 @@ public class FilePhe {
 		for(int i=0; i<phe.length; i++){
 			System.out.println(phe[i][0]+", "+phe[i][1]);
 		}
-		
-		
+				
 	}
 
 	public static double[][] read(String file) {
@@ -43,10 +42,14 @@ public class FilePhe {
 		}finally{
 			return doubleArray;
 		}
-		
-		
-		
-		
-		
+	}
+	
+	public static double[] operate(double[][] phe){
+		double[] phe1 = new double [phe.length];
+		int i=0;
+		for(double[] num : phe ){
+				phe1[i++] = num[1];
+		}
+		return phe1;
 	}
 }

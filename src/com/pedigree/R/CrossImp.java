@@ -73,15 +73,14 @@ public class CrossImp implements Cross{
 	 * @see com.pedigree.R.Cross#crossprod(double[], double[])
 	 */
 	@Override
-	public double[][] crossprod(double[] x, double[] y) {
+	public double crossprod(double[] x, double[] y) {
 		
-		doubleArray = new double[x.length][y.length];
-		for(int i=0; i<x.length; i++){
-			for(int j=0; j<y.length; j++){				
-				doubleArray[i][j] = x[i] * y[j];
-			}
+		double result = 0.0;
+		for(int i=0; i<x.length; i++){			
+			result = x[i] * y[i];
+
 		}
-		return doubleArray;
+		return result;
 	}
 
 	/* （非 Javadoc）
@@ -162,7 +161,7 @@ public class CrossImp implements Cross{
 	@Override
 	public double[][] tcrossprod(double[] x, double[] y) {
 
-		doubleArray =new double[x.length][y.length];
+		doubleArray = new double[x.length][y.length];
 		for(int i=0; i<x.length; i++){
 			for(int j=0; j<y.length; j++){
 				doubleArray[i][j]=x[i]*y[j];
@@ -188,6 +187,9 @@ public class CrossImp implements Cross{
 		return doubleArray;
 	}
 
+	/* （非 Javadoc）
+	 * @see com.pedigree.R.Cross#ncrossprod(double, double[][])
+	 */
 	public double[][] ncrossprod(double x, double[][] y){
 		doubleArray = new double[y.length][y[0].length];
 		for(int i=0; i<y.length; i++){
@@ -197,6 +199,33 @@ public class CrossImp implements Cross{
 		}
 		return doubleArray;
 	}
+	
+	/* （非 Javadoc）
+	 * @see com.pedigree.R.Cross#ncrossprod(double, double[])
+	 */
+	@Override
+	public double[] ncrossprod(double x, double[] y) {
+
+		doubleArrayLine = new double[y.length];
+		for(int i=0; i<y.length; i++){
+			doubleArrayLine[i] = x * y[i];
+		}
+		return doubleArrayLine;
+	}
+
+	/* （非 Javadoc）
+	 * @see com.pedigree.R.Cross#ncrossprod(double[], double[])
+	 */
+	@Override
+	public double ncrossprod(double[] x, double[] y) {
+
+		double result = 0;
+		for(int i=0; i<x.length; i++){
+			result += x[i]* y[i];
+		}
+		return result;
+	}	
+	
 	/* ncrossprod = x[][] %*% y[][]
 	 * 
 	 */
@@ -245,5 +274,6 @@ public class CrossImp implements Cross{
 			}
 		}
 		return doubleArrayLine;
-	}	
+	}
+	
 }
