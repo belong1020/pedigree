@@ -14,6 +14,7 @@ public class test {
 		//System.out.println(str.getBytes().length);
 		//System.out.println(String.valueOf(i).length());
 		
+		
 		double[] a={0.13533665310380152,	
 				0.13803361011615645	,
 				0.1187641831715871	,

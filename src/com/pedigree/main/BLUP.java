@@ -66,22 +66,13 @@ public class BLUP{
 		for(int i=0; i<ngrids+1; i++){
 			delta[i] = Math.exp(logdelta[i]);
 		}
+		double[][] eigV = e.getEigV();
 		double[][] Lambdas = new double[n-q][m];
 		for(int i=0; i<Lambdas.length; i++ ){
 			for(int j=0; j<Lambdas[0].length; j++){
-				Lambdas[i][j] = e.getEigV()[i][j]+ delta[i*Lambdas.length+ j];
+				Lambdas[i][j] = eigV[i][j]+ delta[i*Lambdas.length+ j];
 			}
 		}
-		
-		for(double[] j:e.getEigV()   ){
-			for(double k:j){
-				System.out.print(k+"\t\t");
-			}System.out.println();
-		}
-		
-		
-		
-		
 		
 		double[][] Etasq = new double[n-q][m];
 		for(int i=0; i<Etasq.length; i++){
@@ -90,6 +81,21 @@ public class BLUP{
 			}
 		}
 				
+		/*
+		for(double k:e.getEigD())	{
+			System.out.print(k+"\t\t");
+		}System.out.println();
+		System.out.println();
+		*/
+		for(double[] i:eigV  ){
+			for(double k:i){
+				System.out.println(k+"\t\t");
+			}System.out.println();
+		}
+		
+		
+		
+		
 		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
 		for(int i=0; i<Etasq.length; i++){
 			for(int j=0; j<Etasq.length; j++){
@@ -249,20 +255,19 @@ public class BLUP{
 				
 		double[][] K1 = K;
 		for(int i=0; i<K1.length; i++){			
-			N1[i][i] ++;
+			K1[i][i] ++ ;
 		}
-		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,N1),S);
+		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,K1),S);
+		
 		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
 		double[][] eigD = new Matrix(eig).eig().getD().getArray();	//特征值
-		double[] eigLine =new double[eig.length];
-		for(int i=0; i<eig.length; i++){
-			eigLine[i] = eigD[i][i];
-		}
+		double[] eigLine = Eigen.operateD(eigD);
+		double[][] eigV = Eigen.operateV(new Matrix(eig).eig().getV().getArray());	
 		e.setEigD(eigLine);
-		e.setEigV( new Matrix(eig).eig().getV().getArray());	//特征向量
+		e.setEigV(eigV);	//特征向量          ！！！矩阵与R中符号不全相同   ！！！
 		//# 判断是否复数   a+bi     保留、？？？？
 		//stopifnot(!is.complex(eig$values))
-		//# 数据打包 return 
+		//# 数据打包 return 		
 		return e;
 		
 	}

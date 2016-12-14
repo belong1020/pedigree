@@ -77,7 +77,7 @@ public class CrossImp implements Cross{
 		
 		double result = 0.0;
 		for(int i=0; i<x.length; i++){			
-			result = x[i] * y[i];
+			result += x[i] * y[i];
 
 		}
 		return result;
