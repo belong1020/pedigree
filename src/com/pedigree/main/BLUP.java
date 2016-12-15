@@ -1,5 +1,6 @@
 package com.pedigree.main;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import Jama.EigenvalueDecomposition;
@@ -16,6 +17,7 @@ import com.pedigree.domain.Eigen;
 public class BLUP{
 	private static CrossImp CI = new CrossImp();
 	private static RmathImp RI = new RmathImp();
+	private static DecimalFormat df = new DecimalFormat("0.000");
 	private static double emma_REMLE(double[] y,double[] X,double[][] K){
 		
 		int ngrids=100;
@@ -24,6 +26,20 @@ public class BLUP{
 		double esp=1e-10;
 		
 		Eigen e = emma_eigen_R_wo_Z(K, X);
+
+		double[][] eginv = { 
+				{  0.5508751,  0.12984940,  0.01409955, -0.38221431, -0.5233354, -0.171694723,  0.32408350},
+				{ -0.2927497,  0.61646471, -0.16062793, -0.12955530,  0.1367553,  0.543995419,  0.22814455},
+				{ -0.1573211, -0.51564413, -0.27260048,  0.22559080,  0.1969791, -0.076406645,  0.64383245},
+				{  0.5007464,  0.22004112,  0.21100744,  0.66851049,  0.2638338, -0.003477931, -0.12159014},
+				{ -0.3086342,  0.08008355, -0.50162264,  0.27390612, -0.4415480, -0.285478196, -0.41257635},
+				{ -0.2147670, -0.39793394,  0.55380568,  0.04153088, -0.3605088,  0.446032331, -0.18217231},
+				{ -0.3480275,  0.17358283,  0.45524914, -0.25105744,  0.2960376, -0.604444231, -0.02175179},
+				{  0.2698781, -0.30644353, -0.29931075, -0.44671126,  0.4317864,  0.151473977, -0.45796991}
+		};
+		e.setEigV(eginv);		//
+		
+		
 		
 		int n = y.length;
 		int t = K.length;
@@ -41,7 +57,14 @@ public class BLUP{
 			int vg=0;
 			return delta;
 		}
-		double[] etas = CI.crossprod(e.getEigV(), y);	//eigen.V 错值起点
+		double[][] eigv = e.getEigV();
+		
+		double[] etas = new double[eigv[0].length];//CI.crossprod(e.getEigV(), y);	//eigen.V 错值起点
+		for(int i=0; i<eigv[0].length; i++){
+			for(int j=0; j<eigv.length; j++){
+				etas[i] += eigv[j][i]*y[j];
+			}
+		}
 		
 		double[] logdelta ={
 				-10.0,  -9.8,  -9.6,  -9.4,  -9.2,  -9.0,  -8.8,  -8.6,  -8.4,  -8.2,
@@ -67,12 +90,12 @@ public class BLUP{
 		for(int i=0; i<ngrids+1; i++){
 			delta[i] = Math.exp(logdelta[i]);
 		}
+
 		double[] eigD = e.getEigD();
 		double[][] Lambdas = new double[n-q][m];
-		//System.out.println(n-q+"   "+m);
 		for(int i=0; i<Lambdas.length; i++ ){
 			for(int j=0; j<Lambdas[0].length; j++){
-				Lambdas[i][j] = eigD[i]+ delta[j]-1;//减1 修正误差
+				Lambdas[i][j] = eigD[i]+ delta[j];
 			}
 		}
 		double[][] Etasq = new double[n-q][m];
@@ -82,25 +105,29 @@ public class BLUP{
 			}
 		}
 
-		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
-		for(int i=0; i<Etasq.length; i++){
-			for(int j=0; j<Etasq.length; j++){
-				temp[i][j] = Etasq[i][j]/ Lambdas[i][j];
-			}				
-		}
-		double[] templog = RI.log(RI.colSums(temp));//	log(colSums(Etasq/Lambdas))
+
+		/*double[] templog = RI.log(RI.colSums(temp));//	log(colSums(Etasq/Lambdas))
 		double[] tempcol = RI.colSums(RI.log(Lambdas));//	colSums(log(Lambdas))
 		double nqlog = Math.log((n-q)/(2*Math.PI));//		log((n-q)/(2*pi))
-		double[] LL = new double[templog.length] ;
+		double[] LL = new double[templog.length] ;		
 		for(int i=0; i<LL.length; i++){		
 			LL[i] = 0.5*((n-q)*(nqlog-1-templog[i])-tempcol[i]);// LL = ;
-		}
-		double[] dLL = new double[templog.length] ;
+		}*/
+		
+		double[] dLL = new double[delta.length] ;
+		
+		
 		double[][] Lambdas2 = new double[Lambdas.length][Lambdas[0].length];//	Etasq/Lambdas*Lambdas
 		for(int i=0; i<Lambdas2.length; i++){
 			for(int j=0; j<Lambdas2[0].length; j++){
 				Lambdas2[i][j] = Etasq[i][j]/Lambdas[i][j] * Lambdas[i][j];
 			}
+		}
+		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
+		for(int i=0; i<Etasq.length; i++){
+			for(int j=0; j<Etasq[0].length; j++){
+				temp[i][j] = Etasq[i][j]/ Lambdas[i][j];
+			}				
 		}
 		double[][] Lambdas1 = new double[Lambdas.length][Lambdas[0].length];//	1/Lambdas
 		for(int i=0; i<Lambdas2.length; i++){
@@ -111,11 +138,16 @@ public class BLUP{
 		double[] temp2col1 = RI.colSums(Lambdas2);//colSums(Etasq/(Lambdas * Lambdas))
 		double[] temp2col2 = RI.colSums(temp);
 		double[] temp2col3 = RI.colSums(Lambdas1);
+			
 		
 		for(int i=0; i<dLL.length; i++){
 			dLL[i] = 0.5*delta[i]*((n-q)*temp2col1[i]/temp2col2[i]-temp2col3[i]);
 		}
-		
+		//for(double[] i:dLL){
+		//	for(double j:dLL){
+		//		System.out.print(j+"\t\t");
+		//}System.out.println();
+		//}
 		
 		/*
 		for(double[] i :e.getEigV()){
@@ -131,43 +163,26 @@ public class BLUP{
 		//double[] optLL = vector(length=0);
 		ArrayList<Double> optlogdelta = new ArrayList<Double>();
 		ArrayList<Double> optLL = new ArrayList<Double>();
-		
-		/*
-		if( dLL[0] < esp ) {
-			optlogdelta.add(llim);
-			optLL .add( emma_delta_REML_LL_wo_Z(llim,eig.R $values ,etas));
+				
+		if( dLL[1] < esp ) {
+			optlogdelta.add((double)llim);
+			optLL.add(emma_delta_REML_LL_wo_Z(llim, e.getEigD(), etas));
 		}
-		if( dLL[m-3] > 0-esp ) {
-			optlogdelta.add(ulim);
-			optLL .add(optLL, emma_delta_REML_LL_wo_Z(ulim,eig.R$values,etas));
+		if( dLL[m-1] > 0-esp ) {
+			optlogdelta.add((double)ulim);
+			optLL.add(emma_delta_REML_LL_wo_Z(ulim, e.getEigD(), etas));
 		}
-		*/
 		
-		for(double num:etas){
-			System.out.println(num);
-		}System.out.println();
-		
-		
-		
-		/*
-		etas = { 0.1289140, 3.9825188, -2.1415553, 1.2084147,
-				3.4339298, -2.2483629, 0.1696789 };
-		*/
-		
-		
-		
-		
-		double lock =1;
+		//double lock =1;
 		for(int i=0; i<m-2; i++){
-			if( (( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 ) ) || ( lock==1) ) {//lock++
+			if( ( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 )   ) {//lock++
 				
 				//求解方程根公式
-				
 				double r = Uniroot.uniroot(logdelta[i], logdelta[i+1], e.getEigD(), etas);
 				System.out.println(r+" rrrr ");
 				optlogdelta.add(r);
 				optLL.add(emma_delta_REML_LL_wo_Z(r,e.getEigD(), etas)); //
-				
+
 			}
 		}
 		System.out.println(optlogdelta);
@@ -198,7 +213,6 @@ public class BLUP{
 		int nq = etas.length;
 		double delta = Math.exp(logdelta);
 		double sum1 = 0.0;
-		System.out.println(etas.length + " //// " );
 		for(int i=0; i<etas.length; i++) sum1 += etas[i]*etas[i]/(lambda[i]+delta);
 		double sum2 = 0.0;
 		for(int i=0; i<lambda.length; i++) sum2+=Math.log(lambda[i]+delta);
@@ -266,9 +280,15 @@ public class BLUP{
 		
 		//S <- diag(n) - X %*% solve(crossprod(X,X)) %*% t(X)
 		double[][] S = new Matrix(N).minus(new Matrix(N1)).getArray();// new double[n][n];
-		double[][] K1 = K;
-		for(int i=0; i<K1.length; i++){			
-			K1[i][i] ++ ;
+		double[][] K1 = new double[K.length][K[0].length];
+		for(int i=0; i<K1.length; i++){
+			for(int j=0; j<K1[0].length; j++){
+				if(i==j)
+					K1[i][j]=K[i][j]+1;
+				else
+					K1[i][j]=K[i][j];
+				
+			}
 		}
 		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,K1),S);
 		
@@ -367,7 +387,7 @@ public class BLUP{
 		//}
 		//if(lambda==null){
 		lambda = emma_REMLE(phe,X0, K);
-		System.out.println(lambda);
+		//System.out.println(lambda+" --- lambda   ");
 		//}
 		ys = phe;
 		Z = Diag.diag(n);
@@ -381,20 +401,17 @@ public class BLUP{
 			for(int i=0; i<myK.length; i++){
 				myK[i][i] += esp[byl];
 			}
-			
-			//solve
-			//ik = try(solve(myK),silent=TRUE);
-			//go = inherits(ik,"try-error");
 			try{
 				ik = new Matrix(myK).inverse().getArray();
 				for(int i=0; i<ik.length; i++){			//强制去ik中 无效数 —————— 绝对值小于0.1 
 					for(int j=0; j<ik[0].length; j++){
 						if( Math.abs(ik[i][j])<0.1 )
 							ik[i][j] = 0.0;
+					}
 				}
-					go = false;
-			}
+				go = false;
 			}catch (Exception e){
+				System.out.println("   算了不止一次 ");
 				go = true;
 			}
 			byl ++;
@@ -408,11 +425,12 @@ public class BLUP{
 				go = false;
 			}
 		}
+		
 		//iZZ_K = solve(ZZ + ik*lambda);
 		Matrix matiZZ = new Matrix(ZZ);
 		Matrix matiik = new Matrix(ik);
 				
-		iZZ_K = matiZZ.plus(matiik.times(3.648755)).inverse().getArray() ;//lambda
+		iZZ_K = matiZZ.plus(matiik.times(3.648755)).inverse().getArray() ;//lambda   3.648755
 		Z_iZZ_K_tZ = CI.tcrossprod(iZZ_K,Z);
 		
 		//v <- Z - Z %*% Z.iZZ.K.tZ
@@ -437,7 +455,16 @@ public class BLUP{
 		}
 		tZZ_K = CI.tcrossprod(iZZ_K,Z);
 		BLUP_ebv = CI.ncrossprod(tZZ_K , y_d);
-				
+		
+		/*
+		for(double[] x:iZZ_K){
+			for(double i:x){
+			System.out.print(i+"\t\t");
+			}System.out.println();
+		}*/
+		
+		
+		
 		return BLUP_ebv;// + beta
 		
 	}

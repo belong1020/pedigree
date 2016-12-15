@@ -65,15 +65,19 @@ public class RmathImp implements Rmath{
 	/*		max of ArrayList<Double>
 	 * @see com.pedigree.R.Rmath#max(double[])
 	 */
-	public double max(ArrayList<Double> optLL) {
-		
+	public int max(ArrayList<Double> optLL) {
+		int j = 0;
+		try{
 		double num1 = optLL.get(0);
 		for(int i=1; i<optLL.size(); i++){
 			if(num1 < optLL.get(i)){
-				num1 = optLL.get(i);
+				j = i;
 			}
 		}
-		return num1;
+		}catch(Exception e){
+			System.out.println("optLL ÓÖ¿ÕÀ²£¡£¡ ´·µØ£¡£¡");
+		}
+		return j;
 	}
 
 	

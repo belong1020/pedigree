@@ -10,7 +10,7 @@ interface Rmath {
 	double[][] log(double[][] num);
 	double[] log(double[] num);
 	
-	double max(ArrayList<Double> num);
+	int max(ArrayList<Double> num);
 	
 	
 	

@@ -51,11 +51,26 @@ public class testeigen {
 	//	}
 		System.out.println();
 		
+		/*
 		for(double[] j:e.getEigV()){
 			for(double k:j){
 			System.out.print(k+"\t\t ");
 		}System.out.println();
 		}
+		*/
+		
+		for(int i=0; i<e.getEigV().length; i++){
+			for(int j=0; j<e.getEigV()[0].length; j++){
+			int x=1;
+			if(j<3){	
+				x=-1;
+			}
+			System.out.print(e.getEigV()[i][j]*x+"\t\t ");
+			
+			}System.out.println();
+		}
+		
+		
 		
 		
 		/*
