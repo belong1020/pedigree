@@ -1,0 +1,75 @@
+double
+uniroot (double start, double end, double (*f)(double, void*), double tolx, void* info)
+{	
+  	double a, b, c;
+	double fa, fb, fc;
+	double prev;
+	double currenttol;
+	double p, q, new_step;
+	double cb, t1, t2;
+
+	a = start; b= end; fa = (*f)(a,info); fb=(*f)(b,info);
+	c = a; fc = fa;
+	
+	if ((fa > (double) 0 && fb > (double) 0) || (fa < (double)0 && fb < (double)0)) {
+		printf("mooep!\n");	
+	  /*return 0;*/
+	} 
+	
+	while(1) {
+
+	  	prev = b-a;
+		// fabs() 求绝对值
+		if (fabs(fc) < fabs(fb)) {
+			a=b; b=c; c=a;
+			fa=fb; fb=fc; fc=fa;
+		}
+		currenttol = 2 * FLT_EPSILON * fabs(b) + tolx/2;	// FLT_EPSILON 数值是 1.192092896e-07F, 最小的 float 型数
+		new_step = (c-b)/2;
+		if (fabs(new_step) <= currenttol || fb == (double)0) {
+			return b;
+		}
+		
+		if ( fabs(prev) >= currenttol && fabs(fa) > fabs(fb) ) {
+			cb = c-b;
+			if(a==c) {
+				t1 = fb/fa;
+				p = cb*t1;
+				q = 1.0 - t1;
+			} else {
+				q = fa/fc;
+				t1 = fb/fc;
+				t2 = fb/fa;
+				p = t2 * ( cb * q * (q-t1) - (b-a)*(t1-1.0) );
+				q = (q-1.0) * (t1-1.0) * (t2-1.0);	
+			}
+			if ( p > (double)0) {
+				q = -q;
+			} else {
+				p = -p;
+			}
+
+			if(p < (0.75 * cb * q - fabs(currenttol*q)/2) 
+				&& p < fabs(prev * q/2) ) {
+				new_step = p/q;
+			}
+		}
+
+		if (fabs(new_step) < currenttol ) {
+			if(new_step > (double)0) {
+				new_step = currenttol;
+			} else {
+				new_step = -currenttol;
+			}
+		}
+		
+		a=b; fa=fb;
+		b+= new_step;
+		fb = (*f)(b,info);
+		if( (fb>0 && fc>0) || (fb < 0 && fc < 0) ) {
+			c=a; fc=fa;
+		}	
+	}
+	
+	return 0;
+}

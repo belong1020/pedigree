@@ -8,6 +8,7 @@ import Jama.Matrix;
 import com.pedigree.R.CrossImp;
 import com.pedigree.R.Diag;
 import com.pedigree.R.RmathImp;
+import com.pedigree.R.Uniroot;
 import com.pedigree.R.ginv;
 import com.pedigree.domain.Eigen;
 
@@ -26,7 +27,7 @@ public class BLUP{
 		
 		int n = y.length;
 		int t = K.length;
-		int q = X.length;
+		int q = 1;
 		if(K[0].length != t) System.exit(1);
 		if(X.length != n) System.exit(1);
 		
@@ -40,7 +41,7 @@ public class BLUP{
 			int vg=0;
 			return delta;
 		}
-		double[] etas = CI.crossprod(e.getEigV(), y);
+		double[] etas = CI.crossprod(e.getEigV(), y);	//eigen.V 错值起点
 		
 		double[] logdelta ={
 				-10.0,  -9.8,  -9.6,  -9.4,  -9.2,  -9.0,  -8.8,  -8.6,  -8.4,  -8.2,
@@ -66,36 +67,21 @@ public class BLUP{
 		for(int i=0; i<ngrids+1; i++){
 			delta[i] = Math.exp(logdelta[i]);
 		}
-		double[][] eigV = e.getEigV();
+		double[] eigD = e.getEigD();
 		double[][] Lambdas = new double[n-q][m];
+		//System.out.println(n-q+"   "+m);
 		for(int i=0; i<Lambdas.length; i++ ){
 			for(int j=0; j<Lambdas[0].length; j++){
-				Lambdas[i][j] = eigV[i][j]+ delta[i*Lambdas.length+ j];
+				Lambdas[i][j] = eigD[i]+ delta[j]-1;//减1 修正误差
 			}
 		}
-		
 		double[][] Etasq = new double[n-q][m];
 		for(int i=0; i<Etasq.length; i++){
 			for(int j=0; j<Etasq[0].length; j++){
-				Etasq[i][j] = etas[i*Etasq.length+j] * etas[i*Etasq.length+j];
+				Etasq[i][j] = etas[i] * etas[i];	//eigen.V 错值
 			}
 		}
-				
-		/*
-		for(double k:e.getEigD())	{
-			System.out.print(k+"\t\t");
-		}System.out.println();
-		System.out.println();
-		*/
-		for(double[] i:eigV  ){
-			for(double k:i){
-				System.out.println(k+"\t\t");
-			}System.out.println();
-		}
-		
-		
-		
-		
+
 		double[][] temp = new double[Etasq.length][Etasq[0].length];//	Etasq/Lambdas
 		for(int i=0; i<Etasq.length; i++){
 			for(int j=0; j<Etasq.length; j++){
@@ -129,11 +115,21 @@ public class BLUP{
 		for(int i=0; i<dLL.length; i++){
 			dLL[i] = 0.5*delta[i]*((n-q)*temp2col1[i]/temp2col2[i]-temp2col3[i]);
 		}
-				
+		
+		
+		/*
+		for(double[] i :e.getEigV()){
+			for(double j:i){
+				System.out.print(j+"\t\t ");
+			}System.out.println();
+		}
+		*/
+		
+		
 		//类似list
 		//double[] optlogdelta = vector(length=0);
 		//double[] optLL = vector(length=0);
-		ArrayList<Integer> optlogdelta = new ArrayList<Integer>();
+		ArrayList<Double> optlogdelta = new ArrayList<Double>();
 		ArrayList<Double> optLL = new ArrayList<Double>();
 		
 		/*
@@ -146,19 +142,36 @@ public class BLUP{
 			optLL .add(optLL, emma_delta_REML_LL_wo_Z(ulim,eig.R$values,etas));
 		}
 		*/
+		
+		for(double num:etas){
+			System.out.println(num);
+		}System.out.println();
+		
+		
+		
 		/*
-		for(int i=0; i<m-2; i++){
-			
-			if( ( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 ) ) {
-				
-				//求解方程根公式
-				r = uniroot(emma.delta.REML.dLL.wo.Z, lower=logdelta[i], upper=logdelta[i+1], lambda=eig.R$values, etas=etas)
-				optlogdelta.add(optlogdelta, r);
-				optLL .add(emma.delta.REML.LL.wo.Z(r$root,eig.R$values, etas) //
-			}
-		}
+		etas = { 0.1289140, 3.9825188, -2.1415553, 1.2084147,
+				3.4339298, -2.2483629, 0.1696789 };
 		*/
 		
+		
+		
+		
+		double lock =1;
+		for(int i=0; i<m-2; i++){
+			if( (( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 ) ) || ( lock==1) ) {//lock++
+				
+				//求解方程根公式
+				
+				double r = Uniroot.uniroot(logdelta[i], logdelta[i+1], e.getEigD(), etas);
+				System.out.println(r+" rrrr ");
+				optlogdelta.add(r);
+				optLL.add(emma_delta_REML_LL_wo_Z(r,e.getEigD(), etas)); //
+				
+			}
+		}
+		System.out.println(optlogdelta);
+		System.out.println(optLL);
 		double maxdelta = Math.exp(optlogdelta.get((int)RI.max(optLL)));
 	//	optLL=replaceNaN(optLL)   
 		double maxLL = RI.max(optLL);
@@ -185,6 +198,7 @@ public class BLUP{
 		int nq = etas.length;
 		double delta = Math.exp(logdelta);
 		double sum1 = 0.0;
+		System.out.println(etas.length + " //// " );
 		for(int i=0; i<etas.length; i++) sum1 += etas[i]*etas[i]/(lambda[i]+delta);
 		double sum2 = 0.0;
 		for(int i=0; i<lambda.length; i++) sum2+=Math.log(lambda[i]+delta);
@@ -252,7 +266,6 @@ public class BLUP{
 		
 		//S <- diag(n) - X %*% solve(crossprod(X,X)) %*% t(X)
 		double[][] S = new Matrix(N).minus(new Matrix(N1)).getArray();// new double[n][n];
-				
 		double[][] K1 = K;
 		for(int i=0; i<K1.length; i++){			
 			K1[i][i] ++ ;
@@ -260,6 +273,7 @@ public class BLUP{
 		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,K1),S);
 		
 		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
+		//symmetric=TRUE  去掉特征值最后一个矩阵 一列
 		double[][] eigD = new Matrix(eig).eig().getD().getArray();	//特征值
 		double[] eigLine = Eigen.operateD(eigD);
 		double[][] eigV = Eigen.operateV(new Matrix(eig).eig().getV().getArray());	
@@ -371,16 +385,18 @@ public class BLUP{
 			//solve
 			//ik = try(solve(myK),silent=TRUE);
 			//go = inherits(ik,"try-error");
-			
-			ik = new Matrix(myK).inverse().getArray();
-			for(int i=0; i<ik.length; i++){			//强制去ik中 无效数 —————— 绝对值小于0.1 
-				for(int j=0; j<ik[0].length; j++){
-					if( Math.abs(ik[i][j])<0.1 )
-						ik[i][j] = 0.0;
+			try{
+				ik = new Matrix(myK).inverse().getArray();
+				for(int i=0; i<ik.length; i++){			//强制去ik中 无效数 —————— 绝对值小于0.1 
+					for(int j=0; j<ik[0].length; j++){
+						if( Math.abs(ik[i][j])<0.1 )
+							ik[i][j] = 0.0;
 				}
+					go = false;
 			}
-			
-			go = false;
+			}catch (Exception e){
+				go = true;
+			}
 			byl ++;
 			if(byl==9 && go==true){
 				System.out.println("Replacing the inverse of K with generalized inverse...");

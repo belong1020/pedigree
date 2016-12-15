@@ -2,17 +2,39 @@ package com.pedigree.R;
 import java.math.*;
 import java.util.Scanner;
 
-public class Uniroot {
+public class uni {
 	public static void main(String[] args){
 
-		double[] lambda = { 1.8459247, 1.3494226, 0.8800137, 0.6062865, 0.3628673, 0.2748828, 0.2431024};
-		double[] etas = {-1.612543, -2.527643, 1.326051, -1.002887, 2.552209, -1.09735, -4.746428};
+		double[] lambda = { 1.8459247, 1.3494226, 0.8800137, 0.6062865,
+				0.3628673, 0.2748828, 0.2431024 };
+		double[] etas = { 0.1289140, 3.9825188, -2.1415553, 1.2084147,
+				3.4339298, -2.2483629, 0.1696789 };
 		//double[] etas = {0.1289140, 3.9825188, -2.1415553, 1.2084147,3.4339298, -2.2483629	, 0.1696789};
 		
 		double lower = 0.1;
 		double upper = 1 ;
 		System.out.println(" 请输入精度  ");
-		System.out.println( uniroot( -10, -9.8, lambda, etas));
+		double[] logdelta ={
+				-10.0,  -9.8,  -9.6,  -9.4,  -9.2,  -9.0,  -8.8,  -8.6,  -8.4,  -8.2,
+				 -8.0,  -7.8,  -7.6,  -7.4,  -7.2,  -7.0,  -6.8,  -6.6,  -6.4,  -6.2,
+				 -6.0,  -5.8,  -5.6,  -5.4,  -5.2,  -5.0,  -4.8,  -4.6,  -4.4,  -4.2,
+				 -4.0,  -3.8,  -3.6,  -3.4,  -3.2,  -3.0,  -2.8,  -2.6,  -2.4,  -2.2,
+				 -2.0,  -1.8,  -1.6,  -1.4,  -1.2,  -1.0,  -0.8,  -0.6,  -0.4,  -0.2,
+				  0.0,   0.2,   0.4,   0.6,   0.8,   1.0,   1.2,   1.4,   1.6,   1.8,
+				  2.0,   2.2,   2.4,   2.6,   2.8,   3.0,   3.2,   3.4,   3.6,   3.8,
+				  4.0,   4.2,   4.4,   4.6,   4.8,   5.0,   5.2,   5.4,   5.6,   5.8,
+			 	  6.0,   6.2,   6.4,   6.6,   6.8,   7.0,   7.2,   7.4,   7.6,   7.8,
+				  8.0,   8.2,   8.4,   8.6,   8.8,   9.0,   9.2,   9.4,   9.6,   9.8,
+				  10.0
+		};
+		for(int i=0; i<logdelta.length-1 ;i++){
+			double r=uniroot( logdelta[i], logdelta[i+1], lambda, etas);
+			//System.out.println( r);
+			if(r!=-100){
+				System.out.println(r);
+			}
+			
+		}
 }
 	/** 解方程 
 	 * @param lower
@@ -26,23 +48,20 @@ public class Uniroot {
 		double y1 = 0, y2 = 0, y3 = 0, y4 = 0;
 		double x1 = lower;
 		double x2 = upper;
-		double x3 = (x2 - x1) * 0.618 + x1; // 黄金中点
-		
-		double[][] num1;
-		double[]   num2;
-		
+		double x3 = (x2 - x1) * 0.5 + x1; // 中点
+				
 		double jd = 1; // 精度
 		F a = new F(); // 初始化函数X
 		//y1 = a.Zhi(x1);
 		//y2 = a.Zhi(x2);
 		//y3 = a.Zhi(x3);
+		y1 = a.emma_delta_REML_dLL_wo_Z(x1, lambda, etas);
+		y2 = a.emma_delta_REML_dLL_wo_Z(x2, lambda, etas);
+		if( (y1>0&&y2>0) || (y1<0&&y2<0) ){
+			return -100;
+		}
 		y3 = a.emma_delta_REML_dLL_wo_Z(x3, lambda, etas);
 		
-		
-		
-		//System.out.println(" 请输入精度  ");
-		//Scanner s = new Scanner(System.in); // 获取输入的精度
-		//jd = s.nextInt();
 		jd = 6;
 		long startTime = System.nanoTime(); // 获取程序开始时间
 		while (Math.abs(y3) > Math.pow(10, (-jd - 1))){
@@ -54,7 +73,7 @@ public class Uniroot {
 			} else{
 				x2 = x3;
 			}
-			x3 = (x2 - x1) * 0.618 + x1; // 用黄金中点法向值靠近
+			x3 = (x2 - x1) * 0.5 + x1; // 用黄金中点法向值靠近
 			//y3 = a.Zhi(x3);
 			y3 = a.emma_delta_REML_dLL_wo_Z(x3, lambda, etas);
 			count++;
@@ -67,11 +86,11 @@ public class Uniroot {
 		//System.out.println("y的逼近值为:     " + y3);
 		//System.out.println("运行程序所用的时间为:     " + sum + "   纳秒");
 		//System.out.println("黄金分割次数为:   " + count);
-		return y3;
+		return x3;
 	}
 }
 
-class F { // 计算F(X)的函数 
+class G { // 计算F(X)的函数 
 	double Zhi(double x) {
 		double y = 0;
 		y = 1 / x * (1 - 1 / (Math.pow(1 + x, 5))) - 2;
