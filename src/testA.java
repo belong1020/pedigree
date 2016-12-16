@@ -1,4 +1,6 @@
 
+import java.io.IOException;
+
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 
@@ -6,8 +8,14 @@ import com.pedigree.main.A;;
 
 
 public class testA {
-	public static void main(String[] args) {
-		String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file1.csv" ;
+	public static void main(String[] args) throws IOException {
+		//十五列数据
+		String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file.csv" ;
+		//三列数据
+		String file = "D:\\2015student\\11-17\\张斌2\\系谱数据.txt";
+		
+		
+		
 		boolean standard_id = false;
 		boolean file_output = false;
 		double[][] Aall = A.A(pedigreepath, standard_id, file_output);

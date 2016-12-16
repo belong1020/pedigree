@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class File {
-
+	/*
 	public static void main(String[] args) throws IOException {
 		String path = "D:\\2015student\\11-17\\standard pedigree file1.csv";
 		List num = read(path);
@@ -25,19 +25,21 @@ public class File {
 			}
 		}
 	}
-
+	*/
 	/**
-	 * 读pedigree文件、
-	 * 
+	 *	读pedigree文件、
+	 *	返回n行 15列值得 ArrayList
+	 *
 	 * @param file
-	 * @return
+	 * @return arraylist 
 	 * @throws IOException
 	 */
-	public static ArrayList read(String file) {
+	public static ArrayList read(String file) throws IOException {
 		ArrayList liststr = new ArrayList();
+		BufferedReader br = null;
 
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(
+			br = new BufferedReader(new InputStreamReader(
 					new FileInputStream(file)));
 			String line = br.readLine();
 			while ((line = br.readLine()) != null) {
@@ -58,11 +60,12 @@ public class File {
 					liststr.add(num1[count]);
 				}
 			}
-			br.close();
+			
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
+			br.close();
 			return liststr;
 		}
 	}

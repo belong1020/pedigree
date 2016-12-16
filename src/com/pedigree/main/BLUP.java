@@ -17,25 +17,23 @@ public class BLUP{
 	private static RmathImp RI = new RmathImp();
 	private static double emma_REMLE(double[] y,double[] X,double[][] K){
 		
-		int ngrids=100;
-		int llim=-10;
-		int ulim=10;
-		double esp=1e-10;
+		int ngrids = 100 ;
+		int llim = -10 ;
+		int ulim = 10 ;
+		double esp = 1e-10 ;
 		
 		Eigen e = emma_eigen_R_wo_Z(K, X);
+		/*	
+		for(double num1:e.getEigD()){
+			System.out.print(num1+"	");
+		}System.out.println();
+		System.out.println();
+		for(double[] num:e.getEigV()){
+			for(double num1:num){
+				System.out.print(num1+"	");
+			}System.out.println();
+		}*/
 		
-		double[][] eginv = {		//这里   手动把算错的矩阵替换成正确的   然后测试其他模块
-				{  0.5508751,  0.12984940,  0.01409955, -0.38221431, -0.5233354, -0.171694723,  0.32408350},
-				{ -0.2927497,  0.61646471, -0.16062793, -0.12955530,  0.1367553,  0.543995419,  0.22814455},
-				{ -0.1573211, -0.51564413, -0.27260048,  0.22559080,  0.1969791, -0.076406645,  0.64383245},
-				{  0.5007464,  0.22004112,  0.21100744,  0.66851049,  0.2638338, -0.003477931, -0.12159014},
-				{ -0.3086342,  0.08008355, -0.50162264,  0.27390612, -0.4415480, -0.285478196, -0.41257635},
-				{ -0.2147670, -0.39793394,  0.55380568,  0.04153088, -0.3605088,  0.446032331, -0.18217231},
-				{ -0.3480275,  0.17358283,  0.45524914, -0.25105744,  0.2960376, -0.604444231, -0.02175179},
-				{  0.2698781, -0.30644353, -0.29931075, -0.44671126,  0.4317864,  0.151473977, -0.45796991}
-		};
-		e.setEigV(eginv);			// 在这里替换
-				
 		int n = y.length;
 		int t = K.length;
 		int q = 1;
@@ -54,7 +52,8 @@ public class BLUP{
 		}
 		double[][] eigv = e.getEigV();
 		
-		double[] etas = new double[eigv[0].length];//CI.crossprod(e.getEigV(), y);	//eigen.V 错值起点
+		//CI.crossprod(e.getEigV(), y);	//eigen.V 错值起点
+		double[] etas = new double[eigv[0].length];
 		for(int i=0; i<eigv[0].length; i++){
 			for(int j=0; j<eigv.length; j++){
 				etas[i] += eigv[j][i]*y[j];
@@ -74,11 +73,6 @@ public class BLUP{
 				  8.0,   8.2,   8.4,   8.6,   8.8,   9.0,   9.2,   9.4,   9.6,   9.8,
 				  10.0	
 		};
-		/*
-		double[] logdelta = new double[ngrids+1];
-		for(int i=0; i<ngrids+1; i++){
-			logdelta[i] = i/ngrids*(ulim-llim)+llim;
-		}*/
 				
 		int m = logdelta.length;
 		double[] delta = new double[logdelta.length];
@@ -99,7 +93,7 @@ public class BLUP{
 				Etasq[i][j] = etas[i] * etas[i];	//eigen.V 错值
 			}
 		}
-		
+		// LL 数组 不参与运算
 		/*double[] templog = RI.log(RI.colSums(temp));//	log(colSums(Etasq/Lambdas))
 		double[] tempcol = RI.colSums(RI.log(Lambdas));//	colSums(log(Lambdas))
 		double nqlog = Math.log((n-q)/(2*Math.PI));//		log((n-q)/(2*pi))
@@ -135,39 +129,17 @@ public class BLUP{
 		for(int i=0; i<dLL.length; i++){
 			dLL[i] = 0.5*delta[i]*((n-q)*temp2col1[i]/temp2col2[i]-temp2col3[i]);
 		}
-				
-		/*
-		double[] dLL = {    6.542510e-05,  7.990603e-05,  9.759093e-05,  1.191881e-04,  1.455622e-04,  1.777685e-04,  2.170946e-04,  2.651119e-04,  3.237367e-04,  3.953059e-04,  4.826683e-04,
-				   5.892945e-04,  7.194114e-04,  8.781626e-04,  1.071802e-03,  1.307929e-03,  1.595759e-03,  1.946460e-03,  2.373534e-03,  2.893270e-03,  3.525267e-03,  4.293016e-03,
-				   5.224560e-03,  6.353191e-03,  7.718167e-03,  9.365382e-03,  1.134791e-02,  1.372628e-02,  1.656822e-02,  1.994771e-02,  2.394273e-02,  2.863146e-02,  3.408606e-02,
-				   4.036354e-02,  4.749315e-02,  5.545995e-02,  6.418498e-02,  7.350363e-02,  8.314518e-02,  9.271862e-02,  1.017116e-01,  1.095096e-01,  1.154424e-01,  1.188572e-01,
-				   1.192150e-01,  1.161913e-01,  1.097602e-01,  1.002358e-01,  8.825282e-02,  7.468521e-02,  6.051739e-02,  4.669971e-02,  3.402203e-02,  2.303246e-02,  1.401223e-02,
-				   7.000692e-03,  1.853301e-03, -1.688430e-03, -3.932095e-03, -5.184805e-03, -5.721808e-03, -5.771308e-03, -5.511145e-03, -5.072730e-03, -4.548462e-03, -4.000067e-03,
-				  -3.466377e-03, -2.969892e-03, -2.521929e-03, -2.126484e-03, -1.782999e-03, -1.488281e-03, -1.237785e-03, -1.026445e-03, -8.491756e-04, -7.011727e-04, -5.780620e-04,
-				  -4.759617e-04, -3.914893e-04, -3.217371e-04, -2.642306e-04, -2.168806e-04, -1.779339e-04, -1.459263e-04, -1.196396e-04, -9.806349e-05, -8.036195e-05, -6.584467e-05,
-				  -5.394250e-05, -4.418680e-05, -3.619213e-05, -2.964169e-05, -2.427532e-05, -1.987948e-05, -1.627898e-05, -1.333014e-05, -1.091516e-05, -8.937492e-06, -7.318013e-06,
-				  -5.991894e-06, -4.906023e-06 };
-		*/
-		
-		
-		//for(double[] i:dLL){
-		//	for(double j:dLL){
-		//		System.out.print(j+"\t\t");
-		//}System.out.println();
-		//}
 		
 		/*
-		for(double[] i :e.getEigV()){
-			for(double j:i){
-				System.out.print(j+"\t\t ");
-			}System.out.println();
+		for(double num:dLL){
+			System.out.println(num+"\t");
 		}
 		*/
+				
 		
 		
-		//类似list
-		//double[] optlogdelta = vector(length=0);
-		//double[] optLL = vector(length=0);
+		
+		//	类似list
 		ArrayList<Double> optlogdelta = new ArrayList<Double>();
 		ArrayList<Double> optLL = new ArrayList<Double>();
 		
@@ -180,8 +152,6 @@ public class BLUP{
 			optLL.add(emma_delta_REML_LL_wo_Z(ulim, e.getEigD(), etas));
 		}
 		
-		//double lock =1;
-
 		for(int i=0; i<m-2; i++){
 			if( ( dLL[i]*dLL[i+1] < 0 ) && ( dLL[i] > 0 ) && ( dLL[i+1] < 0 )   ) {//lock++
 				
@@ -272,7 +242,6 @@ public class BLUP{
 		Eigen e = new Eigen();
 		
 		int n = X.length;
-		//int q = X[0].length;
 		double solveX = 1/CI.crossprod(X, X);
 
 		double[][] N = Diag.diag(n);
@@ -293,10 +262,22 @@ public class BLUP{
 					K1[i][j]=K[i][j]+1;
 				else
 					K1[i][j]=K[i][j];
-				
 			}
 		}
-		double[][] eig = CI.ncrossprod(CI.ncrossprod(S,K1),S);
+				
+		for(double[] S1:S){
+			for(double S2:S1){
+				System.out.print(S2+"\t");
+			}System.out.println();
+		}	System.out.println();
+		for(double[] S1:K1){
+			for(double S2:S1){
+				System.out.print(S2+"\t");
+			}System.out.println();
+		}	
+		
+			double[][] eig = CI.ncrossprod(CI.ncrossprod(S,K1),S);
+		
 		
 		// .eig() 求特征值矩阵 --- return 对角线有数的二维数组
 		//symmetric=TRUE  去掉特征值最后一个矩阵 一列
@@ -356,7 +337,7 @@ public class BLUP{
 	 * @return 
 	 */
 	public static double[] BLUP(double[] phe, double[][] K) {
-		//String pedigreepath = "D:\\2015student\\11-17\\standard pedigree file1.csv" ;
+		
 		boolean standard_id = false;
 		boolean file_output = false;
 		double[] CV ;
@@ -383,18 +364,12 @@ public class BLUP{
 		
 		
 		n = phe.length;
-		//if( K == null )	K = Kinship(geno);			//k 不为空
-		//if(CV==null){
-			X0 = new double[n];
-			for(int i=0; i<X0.length; i++)
-				X0[i] = 1;
-		//}else{
-		//	X0 = cbind(matrix(1,n,1),CV);
-		//}
-		//if(lambda==null){
+		X0 = new double[n];
+		for(int i=0; i<X0.length; i++)
+			X0[i] = 1;
 		lambda = emma_REMLE(phe,X0, K);
 		System.out.println(lambda+" --- lambda   ");
-		//}
+
 		ys = phe;
 		Z = Diag.diag(n);
 		ZZ = CI.crossprod(Z,Z);
@@ -436,7 +411,7 @@ public class BLUP{
 		Matrix matiZZ = new Matrix(ZZ);
 		Matrix matiik = new Matrix(ik);
 		//lambda   3.648755 上面大函数算出的值在这里运算		
-		iZZ_K = matiZZ.plus(matiik.times(3.648755)).inverse().getArray() ;
+		iZZ_K = matiZZ.plus(matiik.times(lambda)).inverse().getArray() ;
 		Z_iZZ_K_tZ = CI.tcrossprod(iZZ_K,Z);
 		
 		//v <- Z - Z %*% Z.iZZ.K.tZ

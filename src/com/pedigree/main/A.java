@@ -1,21 +1,30 @@
 package com.pedigree.main;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import com.pedigree.R.Table;
 import com.pedigree.operate.File;
+import com.pedigree.operate.FileGenealogy;
 
 public class A {
 
 	/**  生成k矩阵方法
-	 * @param pedigreepath
+	 * @param pedigreepath 文件地址
 	 * @param standard_id
 	 * @param file_output
 	 * @return
+	 * @throws IOException 
 	 */
 	public static double[][] A(String pedigreepath, boolean standard_id,
-			boolean file_output) {
+			boolean file_output) throws IOException {
+		
+		//读取文件为十五列 数据时  调用File.read()
 		ArrayList liststr = File.read(pedigreepath);
+		
+		//读取文件为三列数据时  调用FileGenealogy.read()
+		//ArrayList liststr = FileGenealogy.read(pedigreepath);
+		
 		String[][] count = Table.table(liststr);
 
 		if (standard_id == true) {
@@ -45,13 +54,13 @@ public class A {
 		}
 		ArrayList ped = new ArrayList();
 		if (standard_id == true) {
-			/*
-			 * pedx<-cbind(pedx,0); # 取pedx第一列第8至最后一个数 存String类型 ？？？？？？？？？？？？？？
-			 * pedx[,4]<-substr(pedx[,1],8,nchar(pedx[,1]))
-			 * #order()函数的返回值其实是你的最小值、次小值、再次小值...次大值、最大值所在的位置。
-			 * index.born<-order(as.numeric(pedx[,4])) pedx<-pedx[index.born,]
-			 * ped<-pedx colnames(ped)=c("ID","Sir","Dam","Birthday")
-			 */
+		/*
+		* pedx<-cbind(pedx,0); # 取pedx第一列第8至最后一个数 存String类型 ？？？？？？？？？？？？？？
+		* pedx[,4]<-substr(pedx[,1],8,nchar(pedx[,1]))
+		* #order()函数的返回值其实是你的最小值、次小值、再次小值...次大值、最大值所在的位置。
+		* index.born<-order(as.numeric(pedx[,4])) pedx<-pedx[index.born,]
+		* ped<-pedx colnames(ped)=c("ID","Sir","Dam","Birthday")
+		*/
 		} else {
 			ArrayList pedx1 = new ArrayList();
 			ArrayList pedx2 = new ArrayList();

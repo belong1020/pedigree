@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class FilePhe {
+	/*
 	public static void main(String[] args){
 		String file = "D:\\2015student\\11-17\\standard pedigree file2.csv";
 		double[][] phe = read(file);
@@ -15,14 +16,14 @@ public class FilePhe {
 		}
 				
 	}
-
-	public static double[][] read(String file) {
+	*/
+	public static double[][] read(String file) throws IOException {
 		
 		double[][] doubleArray = null ;
 		ArrayList liststr = new ArrayList();
-		
+		BufferedReader br = null;
 		try{
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream( file )));
+		br = new BufferedReader(new InputStreamReader(new FileInputStream( file )));
 		String line;
 		while ((line = br.readLine()) != null) {
 			String[] str = line.split(",");		
@@ -40,6 +41,7 @@ public class FilePhe {
 		}catch (IOException e){
 			e.printStackTrace();
 		}finally{
+			br.close();
 			return doubleArray;
 		}
 	}
