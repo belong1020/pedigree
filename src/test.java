@@ -28,6 +28,7 @@ public class test {
 		{1,5,9,13},{2,6,10,14},
 		{3,7,11,15},{4,8,12,16}
 		};
+		double[][] c = { { 1, 4, 7 }, { 2, 5, 8, }, { 3, 6, 9 } };
 		double[][] y = { 
 				{1.0,  0.0, 0.00, 0.50, 0.000, 0.00, 0.000, 0.500},
 				{0.0,  1.0, 0.00, 0.00, 0.500, 0.00, 0.500, 0.000},
@@ -52,28 +53,35 @@ public class test {
 		
 		
 		//eign
-		double[][] cvalue1  = new Matrix(b).eig().getD().getArray();
-		double[][] cvalue2  = new Matrix(b).eig().getV().getArray();		
+		//double[][] cvalue1  = new Matrix(c).eig().getD().getArray();
+		double[][] cvalue3  = new EigenvalueDecomposition(new Matrix(c)).getV().getArray();
+		double[][] cvalue2  = new Matrix(c).eig().getV().getArray();		
 		
-		for(int k=0; k<b.length; k++ ){
-			for(int j=0; j<b[0].length; j++){
-				System.out.print(b[k][j]+" ");
+		for(int k=0; k<c.length; k++ ){
+			for(int j=0; j<c[0].length; j++){
+				System.out.print(c[k][j]+" ");
 				
 			}System.out.println();
 		}
 		System.out.println("--------------------------------------");
-		
+		/*
 		for(int k=0; k<cvalue1.length; k++ ){
 			for(int j=0; j<cvalue1[0].length; j++){
 				System.out.print(cvalue1[k][j]+" ");
 				
 			}System.out.println();
-		}
+		}*/
 		System.out.println("--------------------------------------");
 		
 		for(int k=0; k<cvalue2.length; k++ ){
 			for(int j=0; j<cvalue2[0].length; j++){
 				System.out.print(cvalue2[k][j]+" ");
+				
+			}System.out.println();
+		}
+		for(int k=0; k<cvalue3.length; k++ ){
+			for(int j=0; j<cvalue3[0].length; j++){
+				System.out.print(cvalue3[k][j]+" ");
 				
 			}System.out.println();
 		}

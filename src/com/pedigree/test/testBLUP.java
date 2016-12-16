@@ -15,11 +15,11 @@ public class testBLUP {
 		double[][] phe = FilePhe.read(phefile);
 		double[] phe1 = FilePhe.operate(phe);
 		double[] B = BLUP.BLUP(phe1, Aall);
-		/*
+		
 		for(double num:B){
 			System.out.println(num+" ");
 		}
-		*/
+		
 		
 		
 	}

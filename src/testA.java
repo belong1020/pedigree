@@ -1,4 +1,4 @@
-package com.pedigree.test;
+
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 
